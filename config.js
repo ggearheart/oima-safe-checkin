@@ -17,5 +17,5 @@ window.SAFECHECK_CONFIG = {
 
   // The shared sign-in you create in Supabase → Authentication → Users.
   // The office PASSCODE is that user's PASSWORD (set/change it in Supabase).
-  SHARED_EMAIL: "office@safecheck.local"
+  SHARED_EMAIL: "greg.gearheart@waterboads.ca.gov"
 };
