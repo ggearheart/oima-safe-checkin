@@ -57,10 +57,15 @@ the board syncs live across every device.
 | In the app | In Supabase |
 |---|---|
 | Passcode screen | Sign-in with the shared user (step 3) |
+| The roster (Admin → ✎ Edit roster) | The `employees` table (shared across devices) |
 | A person marked Safe / Needs help | A row in `responses` |
-| Live updates on other devices | Realtime on the `responses` table |
+| Live updates on other devices | Realtime on `responses` + `employees` |
 | "Archive & new event" | Old event set to `archived`, new `active` event created |
 | "Saved versions" list | All rows in `events` (via `event_summary`) |
+
+Exported JSON files include the organization header (org code **0270**,
+"Office of Information Management and Analysis (OIMA)", California State Water
+Resources Control Board).
 
 ## Good to know
 

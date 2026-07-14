@@ -1,6 +1,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Are You Safe? — OIMA Check-In</title>
+<title>Are You Safe? — OIMA Check-In · CA Water Boards</title>
 <style>
   :root {
     --bg: #f4f6f8;
@@ -29,7 +29,7 @@
   header.app {
     background: linear-gradient(135deg, var(--brand), var(--brand-dark));
     color: #fff;
-    padding: 18px 20px;
+    padding: 16px 20px;
     box-shadow: var(--shadow);
     position: sticky;
     top: 0;
@@ -37,12 +37,14 @@
   }
   .head-row { display: flex; align-items: center; gap: 14px; max-width: 1080px; margin: 0 auto; flex-wrap: wrap; }
   .head-mark {
-    width: 42px; height: 42px; border-radius: 10px; background: rgba(255,255,255,.15);
-    display: grid; place-items: center; font-size: 22px; flex: none;
+    background: #fff; border-radius: 10px; padding: 6px 9px; flex: none;
+    display: grid; place-items: center; box-shadow: 0 1px 4px rgba(0,0,0,.15);
   }
+  .head-mark img { height: 34px; width: auto; display: block; }
   .head-title { flex: 1 1 240px; min-width: 0; }
   .head-title h1 { margin: 0; font-size: 19px; font-weight: 700; letter-spacing: .2px; }
-  .head-title .event { margin: 2px 0 0; font-size: 13px; opacity: .9; }
+  .head-title .org { margin: 3px 0 0; font-size: 12px; opacity: .9; font-weight: 600; }
+  .head-title .event { margin: 3px 0 0; font-size: 13px; opacity: .82; }
   .head-title .event b { font-weight: 600; }
   .sync-badge {
     font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 20px; white-space: nowrap;
@@ -169,11 +171,11 @@
   .toast {
     position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%) translateY(20px);
     background: var(--ink); color: #fff; padding: 11px 18px; border-radius: 10px; font-size: 14px;
-    opacity: 0; transition: all .25s; pointer-events: none; z-index: 50; box-shadow: 0 4px 14px rgba(0,0,0,.3); max-width: 90%;
+    opacity: 0; transition: all .25s; pointer-events: none; z-index: 120; box-shadow: 0 4px 14px rgba(0,0,0,.3); max-width: 90%;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-  /* Passcode gate */
+  /* Overlays (gate + roster editor) */
   .gate {
     position: fixed; inset: 0; z-index: 100; background: linear-gradient(135deg, var(--brand), var(--brand-dark));
     display: none; align-items: center; justify-content: center; padding: 20px;
@@ -181,17 +183,34 @@
   .gate.show { display: flex; }
   .gate-card {
     background: var(--card); border-radius: 16px; box-shadow: 0 12px 40px rgba(0,0,0,.3);
-    padding: 30px 26px; width: 100%; max-width: 360px; text-align: center;
+    padding: 28px 26px; width: 100%; max-width: 370px; text-align: center;
   }
-  .gate-card .g-mark { font-size: 40px; }
-  .gate-card h2 { margin: 8px 0 4px; font-size: 20px; }
-  .gate-card p { margin: 0 0 18px; color: var(--muted); font-size: 13.5px; }
+  .gate-card img.g-logo { height: 46px; width: auto; }
+  .gate-card h2 { margin: 12px 0 2px; font-size: 20px; }
+  .gate-card .g-sub { margin: 0 0 18px; color: var(--muted); font-size: 12.5px; }
   .gate-card input {
     width: 100%; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px;
     font-size: 16px; text-align: center; letter-spacing: 2px; margin-bottom: 12px;
   }
   .gate-card .btn { width: 100%; }
   .gate-err { color: var(--help); font-size: 13px; min-height: 18px; margin-top: 10px; font-weight: 600; }
+
+  .editor {
+    position: fixed; inset: 0; z-index: 90; background: rgba(16,32,48,.55);
+    display: none; align-items: flex-start; justify-content: center; padding: 24px 16px; overflow: auto;
+  }
+  .editor.show { display: flex; }
+  .editor-card { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); width: 100%; max-width: 760px; padding: 22px; }
+  .editor-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+  .editor-head h2 { margin: 0; font-size: 18px; }
+  .er-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+  .er-row input { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; min-width: 0; }
+  .er-row .er-name { flex: 1 1 28%; }
+  .er-row .er-unit { flex: 1 1 30%; }
+  .er-row .er-title { flex: 1 1 42%; }
+  .er-del { border: none; background: var(--help-bg); color: var(--help); border-radius: 8px; padding: 8px 11px; cursor: pointer; font-weight: 700; flex: none; }
+  .editor-actions { display: flex; gap: 10px; margin-top: 14px; }
+  @media (max-width: 560px) { .er-row { flex-wrap: wrap; } .er-row input { flex: 1 1 100%; } }
 
   @media (max-width: 560px) {
     .summary { grid-template-columns: repeat(2, 1fr); }
@@ -205,20 +224,37 @@
 <!-- Passcode gate (shared mode only) -->
 <div class="gate" id="gate">
   <div class="gate-card">
-    <div class="g-mark">🛟</div>
-    <h2>Office Check-In</h2>
-    <p>Enter the office passcode to open the safety board.</p>
+    <img class="g-logo" src="waterboards-logo.png" alt="California Water Boards">
+    <h2>OIMA Office Check-In</h2>
+    <p class="g-sub">Office of Information Management and Analysis</p>
     <input id="gateInput" type="password" inputmode="text" placeholder="Passcode" autocomplete="current-password">
     <button class="btn primary" id="gateBtn">Enter</button>
     <div class="gate-err" id="gateErr"></div>
   </div>
 </div>
 
+<!-- Roster editor -->
+<div class="editor" id="rosterEditor">
+  <div class="editor-card">
+    <div class="editor-head">
+      <h2>Edit roster</h2>
+      <button class="link-btn" id="editorClose">✕ Close</button>
+    </div>
+    <p class="hint" id="editorHint"></p>
+    <div id="editorList"></div>
+    <div class="editor-actions">
+      <button class="btn primary" id="addPerson">＋ Add person</button>
+      <button class="btn ghost" id="editorDone">Done</button>
+    </div>
+  </div>
+</div>
+
 <header class="app">
   <div class="head-row">
-    <div class="head-mark">🛟</div>
+    <div class="head-mark"><img src="waterboards-logo.png" alt="California Water Boards"></div>
     <div class="head-title">
       <h1>Are You Safe? — Employee Check-In</h1>
+      <p class="org">Office of Information Management and Analysis (OIMA) · California State Water Resources Control Board</p>
       <p class="event">Event: <b id="hEvent">—</b> &nbsp;·&nbsp; <span id="hDate">—</span></p>
     </div>
     <span class="sync-badge local" id="syncBadge">Local</span>
@@ -230,7 +266,7 @@
 
   <div class="admin-panel" id="adminPanel">
     <h2>Admin controls</h2>
-    <p class="hint" id="adminHint">Set the current event, save a snapshot, or start a new event.</p>
+    <p class="hint" id="adminHint">Set the current event, save a snapshot, edit the roster, or start a new event.</p>
     <div class="admin-row">
       <div class="field">
         <label>Event name</label>
@@ -245,6 +281,7 @@
       <button class="btn primary" id="applyEvent">Update event</button>
       <button class="btn save" id="saveVersion">💾 Save this version</button>
       <button class="btn ghost" id="exportBtn">⬇ Export JSON</button>
+      <button class="btn ghost" id="editRoster">✎ Edit roster</button>
       <button class="btn danger" id="resetBtn">↺ Archive &amp; new event</button>
     </div>
 
@@ -285,8 +322,15 @@
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ---- Roster (from OIMA employee master, vacant positions excluded) ----
-const ROSTER = [
+// ---- Organization (California Water Boards / OIMA) ----
+const ORG = {
+  code: "0270",
+  name: "Office of Information Management and Analysis (OIMA)",
+  department: "California State Water Resources Control Board"
+};
+
+// ---- Default roster (from OIMA employee master; vacant positions excluded) ----
+const DEFAULT_ROSTER = [
   ["Greg Gearheart","Executive","CEA A, Director"],
   ["Andrew Hamilton","Management","Environmental Program Manager I (Sup)"],
   ["Kiranpreet (Kiran) Kaur","Data Integration and Analysis","Senior WRC Engineer (Sup.)"],
@@ -317,8 +361,7 @@ const ROSTER = [
   ["Laura Webber","Monitoring Council","Environmental Program Manager I (Spec)"],
   ["Erickson Burres","Clean Water Team","Sr. Environmental Scientist (Spec)"],
   ["Patricia Orosz","Administrative Support","Office Technician (T)"]
-].map((r,i) => ({ id: i, name: r[0], unit: r[1], title: r[2] }));
-const TOTAL = ROSTER.length;
+].map((r,i) => ({ id: String(i), name: r[0], unit: r[1], title: r[2] }));
 
 // ---- Mode detection --------------------------------------------------------
 const CFG = window.SAFECHECK_CONFIG || {};
@@ -327,17 +370,20 @@ let MODE = CLOUD ? "cloud" : "local";
 let sb = null;
 
 // ---- Shared in-memory state ------------------------------------------------
+let roster = [];                   // [{ id, name, unit, title }]
 let ACTIVE = null;                 // { id, name, date }
 let responses = {};                // employee_id -> { status, note, ts, by }
 let filter = "all";
 let query = "";
-let channel = null;
+let channel = null, empChannel = null;
 
 const LOCAL_STATE_KEY = "oima_safecheck_state_v1";
 const LOCAL_VER_KEY   = "oima_safecheck_versions_v1";
+const LOCAL_ROSTER_KEY= "oima_safecheck_roster_v1";
 const REPORTER_KEY    = "oima_safecheck_reporter";
 
 function resp(id) { return responses[id] || { status: "pending", note: "", ts: "", by: "" }; }
+function getEmp(id) { return roster.find(e => e.id === id) || { id, name: "", unit: "", title: "" }; }
 function reporterName() { return (document.getElementById("reporter").value || "").trim(); }
 function fmtTs(iso) {
   if (!iso) return "";
@@ -355,11 +401,55 @@ function fmtDate(iso) {
 // ===========================================================================
 const Store = {
   async init() {
+    await this.loadRoster();
     if (MODE === "cloud") return this.cloudInit();
     return this.localInit();
   },
 
-  // ---------- LOCAL ----------
+  // ---------- ROSTER ----------
+  async loadRoster() {
+    if (MODE === "cloud") {
+      const { data, error } = await sb.from("employees").select("*").order("sort_order").order("created_at");
+      if (error) { toast("Roster load error: " + error.message); roster = []; return; }
+      roster = (data || []).map(e => ({ id: e.id, name: e.name || "", unit: e.unit || "", title: e.title || "" }));
+    } else {
+      let r = null;
+      try { r = JSON.parse(localStorage.getItem(LOCAL_ROSTER_KEY)); } catch(e) {}
+      roster = (r && Array.isArray(r) && r.length) ? r : DEFAULT_ROSTER.map(e => ({ ...e }));
+    }
+  },
+  saveRosterLocal() { localStorage.setItem(LOCAL_ROSTER_KEY, JSON.stringify(roster)); },
+  async addEmployee() {
+    if (MODE === "cloud") {
+      const { error } = await sb.from("employees").insert({ name: "New employee", unit: "", title: "", sort_order: roster.length });
+      if (error) { toast("Error: " + error.message); return; }
+      await this.loadRoster();
+    } else {
+      roster.push({ id: "n" + Date.now(), name: "New employee", unit: "", title: "" });
+      this.saveRosterLocal();
+    }
+  },
+  async updateEmployee(id, field, value) {
+    const emp = roster.find(e => e.id === id); if (!emp) return;
+    emp[field] = value;
+    if (MODE === "cloud") {
+      const u = {}; u[field] = value;
+      const { error } = await sb.from("employees").update(u).eq("id", id);
+      if (error) toast("Error: " + error.message);
+    } else { this.saveRosterLocal(); }
+  },
+  async removeEmployee(id) {
+    if (MODE === "cloud") {
+      const { error } = await sb.from("employees").delete().eq("id", id);
+      if (error) { toast("Error: " + error.message); return; }
+      await this.loadRoster();
+    } else {
+      roster = roster.filter(e => e.id !== id);
+      this.saveRosterLocal();
+    }
+  },
+
+  // ---------- LOCAL event/responses ----------
   localInit() {
     let s = null;
     try { s = JSON.parse(localStorage.getItem(LOCAL_STATE_KEY)); } catch(e) {}
@@ -371,18 +461,15 @@ const Store = {
     localStorage.setItem(LOCAL_STATE_KEY, JSON.stringify({ event: ACTIVE.name, date: ACTIVE.date, responses }));
   },
 
-  // ---------- CLOUD ----------
+  // ---------- CLOUD event/responses ----------
   async cloudInit() {
     const { data, error } = await sb.from("events")
       .select("*").eq("status", "active").order("created_at", { ascending: false }).limit(1);
     if (error) throw error;
-    if (data && data.length) {
-      ACTIVE = { id: data[0].id, name: data[0].name, date: data[0].event_date };
-    } else {
-      ACTIVE = null;   // admin must start one
-    }
+    ACTIVE = (data && data.length) ? { id: data[0].id, name: data[0].name, date: data[0].event_date } : null;
     await this.cloudRefresh();
     this.cloudSubscribe();
+    this.subscribeEmployees();
   },
   async cloudRefresh() {
     responses = {};
@@ -402,19 +489,29 @@ const Store = {
         async () => { await this.cloudRefresh(); renderSummary(); renderRoster(); })
       .subscribe();
   },
+  subscribeEmployees() {
+    if (empChannel) return;
+    empChannel = sb.channel("rt-employees")
+      .on("postgres_changes", { event: "*", schema: "public", table: "employees" },
+        async () => {
+          await this.loadRoster();
+          afterRosterChange();
+          if (document.getElementById("rosterEditor").classList.contains("show")) renderEditor();
+        })
+      .subscribe();
+  },
 
   // ---------- shared operations ----------
   async setStatus(id, status, note) {
     const r = resp(id);
     const noteVal = note !== undefined ? note : r.note;
     const iso = new Date().toISOString();
-    // optimistic local update
     responses[id] = { status, note: noteVal || "", ts: status === "pending" && !noteVal ? "" : fmtTs(iso), by: reporterName() };
     renderSummary(); renderRoster();
 
     if (MODE === "local") { this.localSave(); return; }
 
-    const emp = ROSTER[id];
+    const emp = getEmp(id);
     const row = {
       event_id: ACTIVE.id, employee_id: id, employee_name: emp.name, unit: emp.unit, title: emp.title,
       status, note: noteVal || "", updated_at: iso, updated_by: reporterName()
@@ -428,13 +525,12 @@ const Store = {
       const { error } = await sb.from("events").update({ name, event_date: date }).eq("id", ACTIVE.id);
       if (error) { toast("Error: " + error.message); return; }
     }
-    ACTIVE.name = name; ACTIVE.date = date;
+    if (ACTIVE) { ACTIVE.name = name; ACTIVE.date = date; }
     if (MODE === "local") this.localSave();
   },
 
   async newEvent(name, date) {
     if (MODE === "local") {
-      // snapshot current into versions, then reset
       this.localPushVersion();
       ACTIVE = { id: "local", name, date };
       responses = {};
@@ -469,42 +565,41 @@ const Store = {
     if (error) { toast("Error: " + error.message); return []; }
     return (data || []).map(e => ({
       id: e.id, name: e.name, date: e.event_date,
-      safe: +e.safe, help: +e.help, pending: TOTAL - (+e.safe) - (+e.help),
+      safe: +e.safe, help: +e.help, pending: Math.max(0, roster.length - (+e.safe) - (+e.help)),
       active: e.status === "active"
     }));
   },
   async saveVersionNow() {
-    // Local: explicit snapshot. Cloud: data already persists, so just export.
     if (MODE === "local") { this.localPushVersion(); return true; }
     return false;
   },
   async fetchSnapshot(v) {
-    // build a full 30-person snapshot object for download
-    if (MODE === "local" && v && v._local) return v._local;
-    if (MODE === "local") return this.snapshotObj();
-    // cloud: pull responses for the event id
+    // Always describe the CURRENT roster, merged with the given event's responses.
     let rmap = {};
-    if (v && v.id) {
+    if (MODE === "cloud" && v && v.id) {
       const { data } = await sb.from("responses").select("*").eq("event_id", v.id);
-      (data || []).forEach(r => { rmap[r.employee_id] = r; });
+      (data || []).forEach(r => { rmap[r.employee_id] = { status: r.status, note: r.note || "", ts: fmtTs(r.updated_at), by: r.updated_by || "" }; });
+    } else if (MODE === "local" && v && v._local) {
+      return { organization: ORG, ...v._local };
     } else {
-      ROSTER.forEach(p => { const r = resp(p.id); if (r.status !== "pending" || r.note) rmap[p.id] = r; });
+      rmap = responses;
     }
-    const meta = v || ACTIVE;
+    const meta = v || ACTIVE || { name: "", date: "" };
     return {
+      organization: ORG,
       event: meta.name, date: meta.date, savedAt: new Date().toISOString(),
-      counts: v ? { safe: v.safe, help: v.help, pending: v.pending, total: TOTAL } : counts(),
-      roster: ROSTER.map(p => {
-        const r = rmap[p.id] || {};
-        return { name: p.name, unit: p.unit, title: p.title,
-                 status: r.status || "pending", note: r.note || "", updated: r.updated_at ? fmtTs(r.updated_at) : (r.ts || ""), by: r.updated_by || r.by || "" };
+      counts: v ? { safe: v.safe, help: v.help, pending: v.pending, total: roster.length } : counts(),
+      roster: roster.map(p => {
+        const r = rmap[p.id] || { status: "pending", note: "", ts: "", by: "" };
+        return { name: p.name, unit: p.unit, title: p.title, status: r.status, note: r.note || "", updated: r.ts || "", by: r.by || "" };
       })
     };
   },
   snapshotObj() {
     return {
+      organization: ORG,
       event: ACTIVE.name, date: ACTIVE.date, savedAt: new Date().toISOString(), counts: counts(),
-      roster: ROSTER.map(p => { const r = resp(p.id); return {
+      roster: roster.map(p => { const r = resp(p.id); return {
         name: p.name, unit: p.unit, title: p.title, status: r.status, note: r.note, updated: r.ts, by: r.by }; })
     };
   },
@@ -525,8 +620,8 @@ const Store = {
 // ===========================================================================
 function counts() {
   let safe=0, help=0;
-  ROSTER.forEach(p => { const s = resp(p.id).status; if (s==="safe") safe++; else if (s==="help") help++; });
-  return { safe, help, pending: TOTAL - safe - help, total: TOTAL };
+  roster.forEach(p => { const s = resp(p.id).status; if (s==="safe") safe++; else if (s==="help") help++; });
+  return { safe, help, pending: roster.length - safe - help, total: roster.length };
 }
 
 function renderHeader() {
@@ -544,8 +639,9 @@ function renderSummary() {
   document.getElementById("cHelp").textContent = c.help;
   document.getElementById("cPending").textContent = c.pending;
   const prog = document.getElementById("progress");
-  prog.querySelector(".p-safe").style.width = (c.safe/c.total*100) + "%";
-  prog.querySelector(".p-help").style.width = (c.help/c.total*100) + "%";
+  const tot = c.total || 1;
+  prog.querySelector(".p-safe").style.width = (c.safe/tot*100) + "%";
+  prog.querySelector(".p-help").style.width = (c.help/tot*100) + "%";
 }
 
 function matches(p) {
@@ -565,19 +661,25 @@ function renderRoster() {
     root.innerHTML = '<p class="empty-note">No active event. Open <b>⚙ Admin</b> to start one.</p>';
     return;
   }
-  const visible = ROSTER.filter(matches);
+  if (!roster.length) {
+    root.innerHTML = '<p class="empty-note">Roster is empty. Open <b>⚙ Admin → ✎ Edit roster</b> to add people.</p>';
+    return;
+  }
+  const visible = roster.filter(matches);
   if (!visible.length) { root.innerHTML = '<p class="empty-note">No one matches the current search or filter.</p>'; return; }
 
   const groups = [], idx = {};
   visible.forEach(p => {
-    if (!(p.unit in idx)) { idx[p.unit] = groups.length; groups.push({ unit: p.unit, people: [] }); }
-    groups[idx[p.unit]].people.push(p);
+    const unit = p.unit || "Unassigned";
+    if (!(unit in idx)) { idx[unit] = groups.length; groups.push({ unit, people: [] }); }
+    groups[idx[unit]].people.push(p);
   });
 
   groups.forEach(g => {
     const gh = document.createElement("div");
     gh.className = "group-head";
-    gh.innerHTML = `${g.unit} <span class="g-count">· ${g.people.length}</span>`;
+    gh.innerHTML = `<span></span> <span class="g-count">· ${g.people.length}</span>`;
+    gh.firstElementChild.textContent = g.unit;
     root.appendChild(gh);
 
     g.people.forEach(p => {
@@ -616,10 +718,40 @@ function renderRoster() {
 }
 
 function addNote(id) {
-  const r = resp(id), p = ROSTER[id];
+  const r = resp(id), p = getEmp(id);
   const note = prompt("Note for " + p.name + " (location, condition, etc.):", r.note || "");
   if (note === null) return;
   Store.setStatus(id, r.status || "pending", note.trim());
+}
+
+// ---- Roster editor UI ----
+function renderEditor() {
+  const list = document.getElementById("editorList");
+  list.innerHTML = "";
+  roster.forEach(e => {
+    const row = document.createElement("div");
+    row.className = "er-row";
+    row.innerHTML = `
+      <input class="er-name" placeholder="Name">
+      <input class="er-unit" placeholder="Unit / Program">
+      <input class="er-title" placeholder="Title">
+      <button class="er-del" title="Remove">✕</button>`;
+    const n = row.querySelector(".er-name"), u = row.querySelector(".er-unit"), t = row.querySelector(".er-title");
+    n.value = e.name; u.value = e.unit; t.value = e.title;
+    n.addEventListener("change", () => commitEmp(e.id, "name", n.value));
+    u.addEventListener("change", () => commitEmp(e.id, "unit", u.value));
+    t.addEventListener("change", () => commitEmp(e.id, "title", t.value));
+    row.querySelector(".er-del").addEventListener("click", async () => {
+      if (!confirm("Remove " + (e.name || "this person") + " from the roster?")) return;
+      await Store.removeEmployee(e.id); renderEditor(); afterRosterChange();
+    });
+    list.appendChild(row);
+  });
+  document.getElementById("editorHint").textContent = roster.length + " people on the roster. Changes save automatically.";
+}
+async function commitEmp(id, field, val) { await Store.updateEmployee(id, field, val.trim()); afterRosterChange(); }
+function afterRosterChange() {
+  renderSummary(); renderRoster();
 }
 
 // ---- Versions UI ----
@@ -653,7 +785,7 @@ function downloadObj(obj) {
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   const safeName = (obj.event || "event").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
-  a.download = `safecheck-${safeName}-${(obj.date||"")}.json`;
+  a.download = `safecheck-${ORG.code}-${safeName}-${(obj.date||"")}.json`;
   a.click();
   URL.revokeObjectURL(a.href);
 }
@@ -664,7 +796,7 @@ function downloadObj(obj) {
 async function applyEvent() {
   const name = document.getElementById("aEvent").value.trim();
   const date = document.getElementById("aDate").value;
-  if (!ACTIVE) { return newEventFromFields(); }
+  if (!ACTIVE) return newEventFromFields();
   await Store.updateMeta(name, date);
   renderHeader(); renderVersions();
   toast("Event updated");
@@ -714,8 +846,15 @@ function toast(msg) {
 }
 
 function showBanner(html, isErr) {
-  const b = document.getElementById("banner");
-  b.innerHTML = `<div class="banner ${isErr?"err":""}">${html}</div>`;
+  document.getElementById("banner").innerHTML = `<div class="banner ${isErr?"err":""}">${html}</div>`;
+}
+
+function openEditor() {
+  renderEditor();
+  document.getElementById("rosterEditor").classList.add("show");
+}
+function closeEditor() {
+  document.getElementById("rosterEditor").classList.remove("show");
 }
 
 function wire() {
@@ -733,6 +872,17 @@ function wire() {
   document.getElementById("saveVersion").addEventListener("click", saveVersion);
   document.getElementById("exportBtn").addEventListener("click", async () => downloadObj(await Store.fetchSnapshot(null)));
   document.getElementById("resetBtn").addEventListener("click", resetTool);
+  document.getElementById("editRoster").addEventListener("click", openEditor);
+
+  document.getElementById("editorClose").addEventListener("click", closeEditor);
+  document.getElementById("editorDone").addEventListener("click", closeEditor);
+  document.getElementById("addPerson").addEventListener("click", async () => {
+    await Store.addEmployee();
+    renderEditor(); afterRosterChange();
+    const inputs = document.querySelectorAll("#editorList .er-name");
+    const last = inputs[inputs.length - 1];
+    if (last) { last.focus(); last.select(); last.scrollIntoView({ block: "center" }); }
+  });
 
   document.getElementById("search").addEventListener("input", e => { query = e.target.value.trim().toLowerCase(); renderRoster(); });
   document.querySelectorAll(".chip").forEach(ch => {
@@ -746,7 +896,6 @@ function wire() {
   rep.value = localStorage.getItem(REPORTER_KEY) || "";
   rep.addEventListener("input", () => localStorage.setItem(REPORTER_KEY, rep.value));
 
-  // In cloud mode, hide the "Save this version" button (data auto-saves).
   if (MODE === "cloud") document.getElementById("saveVersion").style.display = "none";
 }
 
