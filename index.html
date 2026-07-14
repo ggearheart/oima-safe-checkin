@@ -27,7 +27,7 @@
     -webkit-font-smoothing: antialiased;
   }
   header.app {
-    background: linear-gradient(135deg, #1f5c8b, #164b73);
+    background: linear-gradient(135deg, var(--brand), var(--brand-dark));
     color: #fff;
     padding: 18px 20px;
     box-shadow: var(--shadow);
@@ -44,8 +44,21 @@
   .head-title h1 { margin: 0; font-size: 19px; font-weight: 700; letter-spacing: .2px; }
   .head-title .event { margin: 2px 0 0; font-size: 13px; opacity: .9; }
   .head-title .event b { font-weight: 600; }
+  .sync-badge {
+    font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 20px; white-space: nowrap;
+    background: rgba(255,255,255,.16); align-self: center;
+  }
+  .sync-badge.live::before { content: "● "; color: #7ee2a8; }
+  .sync-badge.local::before { content: "● "; color: #ffd27a; }
 
   .wrap { max-width: 1080px; margin: 0 auto; padding: 18px 20px 60px; }
+
+  .banner {
+    background: var(--pending-bg); color: #7a5512; border: 1px solid #f0d8a8;
+    border-radius: 10px; padding: 10px 14px; font-size: 13px; margin-bottom: 16px;
+  }
+  .banner b { font-weight: 700; }
+  .banner.err { background: var(--help-bg); color: #8f2b2b; border-color: #f0bcbc; }
 
   /* Summary bar */
   .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 4px 0 18px; }
@@ -73,6 +86,11 @@
     font-size: 15px; background: var(--card);
   }
   .search::before { content: "🔍"; position: absolute; left: 11px; top: 50%; transform: translateY(-50%); font-size: 13px; opacity: .6; }
+  .reporter { position: relative; flex: 0 1 190px; }
+  .reporter input {
+    width: 100%; padding: 10px 12px; border: 1px dashed var(--line); border-radius: 10px;
+    font-size: 14px; background: var(--card);
+  }
   .filters { display: flex; gap: 6px; flex-wrap: wrap; }
   .chip {
     border: 1px solid var(--line); background: var(--card); color: var(--muted);
@@ -136,31 +154,65 @@
   .btn.ghost { background: #eef2f6; color: var(--ink); }
   .btn.danger { background: var(--help-bg); color: var(--help); }
   .btn.save { background: var(--safe); color: #fff; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
 
   .versions { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 14px; }
   .versions h3 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); }
   .ver { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 13px; flex-wrap: wrap; }
   .ver .v-name { font-weight: 700; flex: 1 1 160px; }
+  .ver .v-name .tag { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; color: var(--safe); margin-left: 6px; }
   .ver .v-stat { color: var(--muted); font-size: 12px; }
-  .ver a, .ver button { font-size: 12px; }
-  .link-btn { background: none; border: none; color: var(--brand); font-weight: 600; cursor: pointer; padding: 4px 6px; }
+  .link-btn { background: none; border: none; color: var(--brand); font-weight: 600; cursor: pointer; padding: 4px 6px; font-size: 12px; }
   .link-btn.del { color: var(--help); }
   .empty-note { color: var(--muted); font-size: 13px; font-style: italic; }
 
   .toast {
     position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%) translateY(20px);
     background: var(--ink); color: #fff; padding: 11px 18px; border-radius: 10px; font-size: 14px;
-    opacity: 0; transition: all .25s; pointer-events: none; z-index: 50; box-shadow: 0 4px 14px rgba(0,0,0,.3);
+    opacity: 0; transition: all .25s; pointer-events: none; z-index: 50; box-shadow: 0 4px 14px rgba(0,0,0,.3); max-width: 90%;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* Passcode gate */
+  .gate {
+    position: fixed; inset: 0; z-index: 100; background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+    display: none; align-items: center; justify-content: center; padding: 20px;
+  }
+  .gate.show { display: flex; }
+  .gate-card {
+    background: var(--card); border-radius: 16px; box-shadow: 0 12px 40px rgba(0,0,0,.3);
+    padding: 30px 26px; width: 100%; max-width: 360px; text-align: center;
+  }
+  .gate-card .g-mark { font-size: 40px; }
+  .gate-card h2 { margin: 8px 0 4px; font-size: 20px; }
+  .gate-card p { margin: 0 0 18px; color: var(--muted); font-size: 13.5px; }
+  .gate-card input {
+    width: 100%; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px;
+    font-size: 16px; text-align: center; letter-spacing: 2px; margin-bottom: 12px;
+  }
+  .gate-card .btn { width: 100%; }
+  .gate-err { color: var(--help); font-size: 13px; min-height: 18px; margin-top: 10px; font-weight: 600; }
 
   @media (max-width: 560px) {
     .summary { grid-template-columns: repeat(2, 1fr); }
     .person { gap: 10px; }
     .btns { flex: 1 1 100%; }
     .sbtn { flex: 1; text-align: center; }
+    .reporter { flex: 1 1 100%; }
   }
 </style>
+
+<!-- Passcode gate (shared mode only) -->
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <div class="g-mark">🛟</div>
+    <h2>Office Check-In</h2>
+    <p>Enter the office passcode to open the safety board.</p>
+    <input id="gateInput" type="password" inputmode="text" placeholder="Passcode" autocomplete="current-password">
+    <button class="btn primary" id="gateBtn">Enter</button>
+    <div class="gate-err" id="gateErr"></div>
+  </div>
+</div>
 
 <header class="app">
   <div class="head-row">
@@ -169,13 +221,16 @@
       <h1>Are You Safe? — Employee Check-In</h1>
       <p class="event">Event: <b id="hEvent">—</b> &nbsp;·&nbsp; <span id="hDate">—</span></p>
     </div>
+    <span class="sync-badge local" id="syncBadge">Local</span>
   </div>
 </header>
 
 <div class="wrap">
+  <div id="banner"></div>
+
   <div class="admin-panel" id="adminPanel">
     <h2>Admin controls</h2>
-    <p class="hint">Set the current event, save a snapshot of responses, or reset for a new event. Data is stored in this browser.</p>
+    <p class="hint" id="adminHint">Set the current event, save a snapshot, or start a new event.</p>
     <div class="admin-row">
       <div class="field">
         <label>Event name</label>
@@ -190,7 +245,7 @@
       <button class="btn primary" id="applyEvent">Update event</button>
       <button class="btn save" id="saveVersion">💾 Save this version</button>
       <button class="btn ghost" id="exportBtn">⬇ Export JSON</button>
-      <button class="btn danger" id="resetBtn">↺ Reset &amp; new event</button>
+      <button class="btn danger" id="resetBtn">↺ Archive &amp; new event</button>
     </div>
 
     <div class="versions">
@@ -212,6 +267,7 @@
 
   <div class="controls">
     <div class="search"><input id="search" type="text" placeholder="Search name, unit, or title…"></div>
+    <div class="reporter"><input id="reporter" type="text" placeholder="Reporting as… (your name)"></div>
     <div class="filters">
       <button class="chip active" data-filter="all">All</button>
       <button class="chip" data-filter="pending">No response</button>
@@ -226,6 +282,8 @@
 <button class="admin-toggle" id="adminToggle">⚙ Admin</button>
 <div class="toast" id="toast"></div>
 
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ---- Roster (from OIMA employee master, vacant positions excluded) ----
 const ROSTER = [
@@ -260,59 +318,223 @@ const ROSTER = [
   ["Erickson Burres","Clean Water Team","Sr. Environmental Scientist (Spec)"],
   ["Patricia Orosz","Administrative Support","Office Technician (T)"]
 ].map((r,i) => ({ id: i, name: r[0], unit: r[1], title: r[2] }));
+const TOTAL = ROSTER.length;
 
-const STATE_KEY = "oima_safecheck_state_v1";
-const VER_KEY   = "oima_safecheck_versions_v1";
+// ---- Mode detection --------------------------------------------------------
+const CFG = window.SAFECHECK_CONFIG || {};
+const CLOUD = !!(CFG.SUPABASE_URL && CFG.SUPABASE_ANON_KEY && !/YOUR-|example\./i.test(CFG.SUPABASE_URL));
+let MODE = CLOUD ? "cloud" : "local";
+let sb = null;
 
-const DEFAULT_STATE = {
-  event: "Gas leak at CalEPA HQ",
-  date: "2026-07-14",
-  responses: {}   // id -> { status: 'safe'|'help'|'pending', note: '', ts: '' }
-};
-
-let state = load();
+// ---- Shared in-memory state ------------------------------------------------
+let ACTIVE = null;                 // { id, name, date }
+let responses = {};                // employee_id -> { status, note, ts, by }
 let filter = "all";
 let query = "";
+let channel = null;
 
-function load() {
-  try {
-    const s = JSON.parse(localStorage.getItem(STATE_KEY));
-    if (s && s.event !== undefined) return s;
-  } catch(e) {}
-  return structuredClone(DEFAULT_STATE);
-}
-function save() { localStorage.setItem(STATE_KEY, JSON.stringify(state)); }
-function getVersions() {
-  try { return JSON.parse(localStorage.getItem(VER_KEY)) || []; } catch(e) { return []; }
-}
-function setVersions(v) { localStorage.setItem(VER_KEY, JSON.stringify(v)); }
+const LOCAL_STATE_KEY = "oima_safecheck_state_v1";
+const LOCAL_VER_KEY   = "oima_safecheck_versions_v1";
+const REPORTER_KEY    = "oima_safecheck_reporter";
 
-function resp(id) {
-  return state.responses[id] || { status: "pending", note: "", ts: "" };
-}
-function nowStamp() {
-  const d = new Date();
-  return d.toLocaleString(undefined, { month:"short", day:"numeric", hour:"numeric", minute:"2-digit" });
+function resp(id) { return responses[id] || { status: "pending", note: "", ts: "", by: "" }; }
+function reporterName() { return (document.getElementById("reporter").value || "").trim(); }
+function fmtTs(iso) {
+  if (!iso) return "";
+  try { return new Date(iso).toLocaleString(undefined, { month:"short", day:"numeric", hour:"numeric", minute:"2-digit" }); }
+  catch(e) { return ""; }
 }
 function fmtDate(iso) {
   if (!iso) return "—";
-  const [y,m,d] = iso.split("-").map(Number);
+  const [y,m,d] = String(iso).split("-").map(Number);
   return new Date(y, m-1, d).toLocaleDateString(undefined, { weekday:"short", year:"numeric", month:"long", day:"numeric" });
 }
 
-// ---- Rendering ----
+// ===========================================================================
+//  DATA LAYER — same interface, two implementations (local + cloud)
+// ===========================================================================
+const Store = {
+  async init() {
+    if (MODE === "cloud") return this.cloudInit();
+    return this.localInit();
+  },
+
+  // ---------- LOCAL ----------
+  localInit() {
+    let s = null;
+    try { s = JSON.parse(localStorage.getItem(LOCAL_STATE_KEY)); } catch(e) {}
+    if (!s || s.event === undefined) s = { event: "Gas leak at CalEPA HQ", date: "2026-07-14", responses: {} };
+    ACTIVE = { id: "local", name: s.event, date: s.date };
+    responses = s.responses || {};
+  },
+  localSave() {
+    localStorage.setItem(LOCAL_STATE_KEY, JSON.stringify({ event: ACTIVE.name, date: ACTIVE.date, responses }));
+  },
+
+  // ---------- CLOUD ----------
+  async cloudInit() {
+    const { data, error } = await sb.from("events")
+      .select("*").eq("status", "active").order("created_at", { ascending: false }).limit(1);
+    if (error) throw error;
+    if (data && data.length) {
+      ACTIVE = { id: data[0].id, name: data[0].name, date: data[0].event_date };
+    } else {
+      ACTIVE = null;   // admin must start one
+    }
+    await this.cloudRefresh();
+    this.cloudSubscribe();
+  },
+  async cloudRefresh() {
+    responses = {};
+    if (!ACTIVE) return;
+    const { data, error } = await sb.from("responses").select("*").eq("event_id", ACTIVE.id);
+    if (error) { toast("Load error: " + error.message); return; }
+    (data || []).forEach(r => {
+      responses[r.employee_id] = { status: r.status, note: r.note || "", ts: fmtTs(r.updated_at), by: r.updated_by || "" };
+    });
+  },
+  cloudSubscribe() {
+    if (channel) { sb.removeChannel(channel); channel = null; }
+    if (!ACTIVE) return;
+    channel = sb.channel("rt-" + ACTIVE.id)
+      .on("postgres_changes",
+        { event: "*", schema: "public", table: "responses", filter: "event_id=eq." + ACTIVE.id },
+        async () => { await this.cloudRefresh(); renderSummary(); renderRoster(); })
+      .subscribe();
+  },
+
+  // ---------- shared operations ----------
+  async setStatus(id, status, note) {
+    const r = resp(id);
+    const noteVal = note !== undefined ? note : r.note;
+    const iso = new Date().toISOString();
+    // optimistic local update
+    responses[id] = { status, note: noteVal || "", ts: status === "pending" && !noteVal ? "" : fmtTs(iso), by: reporterName() };
+    renderSummary(); renderRoster();
+
+    if (MODE === "local") { this.localSave(); return; }
+
+    const emp = ROSTER[id];
+    const row = {
+      event_id: ACTIVE.id, employee_id: id, employee_name: emp.name, unit: emp.unit, title: emp.title,
+      status, note: noteVal || "", updated_at: iso, updated_by: reporterName()
+    };
+    const { error } = await sb.from("responses").upsert(row, { onConflict: "event_id,employee_id" });
+    if (error) toast("Save failed: " + error.message);
+  },
+
+  async updateMeta(name, date) {
+    if (MODE === "cloud" && ACTIVE) {
+      const { error } = await sb.from("events").update({ name, event_date: date }).eq("id", ACTIVE.id);
+      if (error) { toast("Error: " + error.message); return; }
+    }
+    ACTIVE.name = name; ACTIVE.date = date;
+    if (MODE === "local") this.localSave();
+  },
+
+  async newEvent(name, date) {
+    if (MODE === "local") {
+      // snapshot current into versions, then reset
+      this.localPushVersion();
+      ACTIVE = { id: "local", name, date };
+      responses = {};
+      this.localSave();
+      return;
+    }
+    if (ACTIVE) await sb.from("events").update({ status: "archived" }).eq("id", ACTIVE.id);
+    const { data, error } = await sb.from("events").insert({ name, event_date: date, status: "active" }).select().single();
+    if (error) { toast("Error: " + error.message); return; }
+    ACTIVE = { id: data.id, name: data.name, date: data.event_date };
+    responses = {};
+    this.cloudSubscribe();
+  },
+
+  // ---------- versions ----------
+  localPushVersion() {
+    const versions = this.localVersions();
+    versions.push(this.snapshotObj());
+    localStorage.setItem(LOCAL_VER_KEY, JSON.stringify(versions));
+  },
+  localVersions() {
+    try { return JSON.parse(localStorage.getItem(LOCAL_VER_KEY)) || []; } catch(e) { return []; }
+  },
+  async listVersions() {
+    if (MODE === "local") {
+      return this.localVersions().slice().reverse().map(v => ({
+        id: v.savedAt, name: v.event, date: v.date,
+        safe: v.counts.safe, help: v.counts.help, pending: v.counts.pending, active: false, _local: v
+      }));
+    }
+    const { data, error } = await sb.from("event_summary").select("*").order("created_at", { ascending: false });
+    if (error) { toast("Error: " + error.message); return []; }
+    return (data || []).map(e => ({
+      id: e.id, name: e.name, date: e.event_date,
+      safe: +e.safe, help: +e.help, pending: TOTAL - (+e.safe) - (+e.help),
+      active: e.status === "active"
+    }));
+  },
+  async saveVersionNow() {
+    // Local: explicit snapshot. Cloud: data already persists, so just export.
+    if (MODE === "local") { this.localPushVersion(); return true; }
+    return false;
+  },
+  async fetchSnapshot(v) {
+    // build a full 30-person snapshot object for download
+    if (MODE === "local" && v && v._local) return v._local;
+    if (MODE === "local") return this.snapshotObj();
+    // cloud: pull responses for the event id
+    let rmap = {};
+    if (v && v.id) {
+      const { data } = await sb.from("responses").select("*").eq("event_id", v.id);
+      (data || []).forEach(r => { rmap[r.employee_id] = r; });
+    } else {
+      ROSTER.forEach(p => { const r = resp(p.id); if (r.status !== "pending" || r.note) rmap[p.id] = r; });
+    }
+    const meta = v || ACTIVE;
+    return {
+      event: meta.name, date: meta.date, savedAt: new Date().toISOString(),
+      counts: v ? { safe: v.safe, help: v.help, pending: v.pending, total: TOTAL } : counts(),
+      roster: ROSTER.map(p => {
+        const r = rmap[p.id] || {};
+        return { name: p.name, unit: p.unit, title: p.title,
+                 status: r.status || "pending", note: r.note || "", updated: r.updated_at ? fmtTs(r.updated_at) : (r.ts || ""), by: r.updated_by || r.by || "" };
+      })
+    };
+  },
+  snapshotObj() {
+    return {
+      event: ACTIVE.name, date: ACTIVE.date, savedAt: new Date().toISOString(), counts: counts(),
+      roster: ROSTER.map(p => { const r = resp(p.id); return {
+        name: p.name, unit: p.unit, title: p.title, status: r.status, note: r.note, updated: r.ts, by: r.by }; })
+    };
+  },
+  async deleteVersion(v) {
+    if (MODE === "local") {
+      const versions = this.localVersions().filter(x => x.savedAt !== v.id);
+      localStorage.setItem(LOCAL_VER_KEY, JSON.stringify(versions));
+      return;
+    }
+    if (v.active) { toast("Can't delete the active event."); return; }
+    const { error } = await sb.from("events").delete().eq("id", v.id);
+    if (error) toast("Error: " + error.message);
+  }
+};
+
+// ===========================================================================
+//  RENDERING
+// ===========================================================================
 function counts() {
-  let safe=0, help=0, pending=0;
-  ROSTER.forEach(p => {
-    const s = resp(p.id).status;
-    if (s==="safe") safe++; else if (s==="help") help++; else pending++;
-  });
-  return { safe, help, pending, total: ROSTER.length };
+  let safe=0, help=0;
+  ROSTER.forEach(p => { const s = resp(p.id).status; if (s==="safe") safe++; else if (s==="help") help++; });
+  return { safe, help, pending: TOTAL - safe - help, total: TOTAL };
 }
 
 function renderHeader() {
-  document.getElementById("hEvent").textContent = state.event || "(unnamed event)";
-  document.getElementById("hDate").textContent = fmtDate(state.date);
+  document.getElementById("hEvent").textContent = ACTIVE ? (ACTIVE.name || "(unnamed event)") : "No active event";
+  document.getElementById("hDate").textContent = ACTIVE ? fmtDate(ACTIVE.date) : "—";
+  const badge = document.getElementById("syncBadge");
+  if (MODE === "cloud") { badge.className = "sync-badge live"; badge.textContent = "Live · shared"; }
+  else { badge.className = "sync-badge local"; badge.textContent = "Local only"; }
 }
 
 function renderSummary() {
@@ -339,16 +561,14 @@ function matches(p) {
 function renderRoster() {
   const root = document.getElementById("roster");
   root.innerHTML = "";
-  const visible = ROSTER.filter(matches);
-
-  if (!visible.length) {
-    root.innerHTML = '<p class="empty-note">No one matches the current search or filter.</p>';
+  if (!ACTIVE) {
+    root.innerHTML = '<p class="empty-note">No active event. Open <b>⚙ Admin</b> to start one.</p>';
     return;
   }
+  const visible = ROSTER.filter(matches);
+  if (!visible.length) { root.innerHTML = '<p class="empty-note">No one matches the current search or filter.</p>'; return; }
 
-  // group by unit, preserving roster order
-  const groups = [];
-  const idx = {};
+  const groups = [], idx = {};
   visible.forEach(p => {
     if (!(p.unit in idx)) { idx[p.unit] = groups.length; groups.push({ unit: p.unit, people: [] }); }
     groups[idx[p.unit]].people.push(p);
@@ -364,12 +584,13 @@ function renderRoster() {
       const r = resp(p.id);
       const el = document.createElement("div");
       el.className = "person s-" + r.status;
+      const stamp = r.ts ? ("Updated " + r.ts + (r.by ? " · by " + r.by : "")) : "";
       el.innerHTML = `
         <div class="p-main">
           <div class="p-name"></div>
           <div class="p-meta"></div>
           <div class="p-note ${r.note ? "show":""}"></div>
-          <div class="p-time">${r.ts ? "Updated "+r.ts : ""}</div>
+          <div class="p-time"></div>
         </div>
         <div class="btns">
           <button class="sbtn safe ${r.status==="safe"?"on":""}" data-act="safe">✓ Safe</button>
@@ -378,6 +599,7 @@ function renderRoster() {
         <button class="note-btn" data-act="note">＋ Note</button>`;
       el.querySelector(".p-name").textContent = p.name;
       el.querySelector(".p-meta").textContent = p.title;
+      el.querySelector(".p-time").textContent = stamp;
       if (r.note) el.querySelector(".p-note").textContent = "“" + r.note + "”";
 
       el.querySelectorAll("[data-act]").forEach(b => {
@@ -385,7 +607,7 @@ function renderRoster() {
           const act = b.dataset.act;
           if (act === "note") { addNote(p.id); return; }
           const cur = resp(p.id).status;
-          setStatus(p.id, cur === act ? "pending" : act);
+          Store.setStatus(p.id, cur === act ? "pending" : act);
         });
       });
       root.appendChild(el);
@@ -393,143 +615,189 @@ function renderRoster() {
   });
 }
 
-function setStatus(id, status) {
-  const r = resp(id);
-  state.responses[id] = { status, note: r.note || "", ts: status==="pending" ? "" : nowStamp() };
-  save();
-  renderSummary(); renderRoster();
-}
-
 function addNote(id) {
-  const r = resp(id);
-  const p = ROSTER[id];
+  const r = resp(id), p = ROSTER[id];
   const note = prompt("Note for " + p.name + " (location, condition, etc.):", r.note || "");
   if (note === null) return;
-  state.responses[id] = { status: r.status || "pending", note: note.trim(), ts: r.ts || nowStamp() };
-  save();
-  renderRoster();
+  Store.setStatus(id, r.status || "pending", note.trim());
 }
 
-// ---- Admin ----
-function renderVersions() {
+// ---- Versions UI ----
+async function renderVersions() {
   const list = document.getElementById("versionList");
-  const versions = getVersions();
+  const versions = await Store.listVersions();
   if (!versions.length) { list.innerHTML = '<p class="empty-note">No saved versions yet.</p>'; return; }
   list.innerHTML = "";
-  versions.slice().reverse().forEach(v => {
-    const c = v.counts;
+  versions.forEach(v => {
     const row = document.createElement("div");
     row.className = "ver";
     row.innerHTML = `
       <span class="v-name"></span>
-      <span class="v-stat">${c.safe} safe · ${c.help} help · ${c.pending} no response</span>
+      <span class="v-stat">${v.safe} safe · ${v.help} help · ${v.pending} no response</span>
       <button class="link-btn" data-act="dl">Download</button>
       <button class="link-btn del" data-act="del">Delete</button>`;
-    row.querySelector(".v-name").textContent = `${v.event} — ${fmtDate(v.date)}`;
-    row.querySelector('[data-act="dl"]').addEventListener("click", () => downloadVersion(v));
-    row.querySelector('[data-act="del"]').addEventListener("click", () => {
+    const nameEl = row.querySelector(".v-name");
+    nameEl.textContent = `${v.name} — ${fmtDate(v.date)}`;
+    if (v.active) { const t = document.createElement("span"); t.className = "tag"; t.textContent = "active"; nameEl.appendChild(t); }
+    row.querySelector('[data-act="dl"]').addEventListener("click", async () => downloadObj(await Store.fetchSnapshot(v)));
+    row.querySelector('[data-act="del"]').addEventListener("click", async () => {
       if (!confirm("Delete this saved version?")) return;
-      setVersions(getVersions().filter(x => x.savedAt !== v.savedAt));
-      renderVersions();
+      await Store.deleteVersion(v); renderVersions();
     });
     list.appendChild(row);
   });
 }
 
-function snapshot() {
-  return {
-    event: state.event,
-    date: state.date,
-    savedAt: new Date().toISOString(),
-    counts: counts(),
-    roster: ROSTER.map(p => {
-      const r = resp(p.id);
-      return { name: p.name, unit: p.unit, title: p.title, status: r.status, note: r.note, updated: r.ts };
-    })
-  };
-}
-
-function saveVersion() {
-  const snap = snapshot();
-  const versions = getVersions();
-  versions.push(snap);
-  setVersions(versions);
-  renderVersions();
-  toast("Version saved for “" + snap.event + "”");
-}
-
-function downloadVersion(v) {
-  const blob = new Blob([JSON.stringify(v, null, 2)], { type: "application/json" });
+function downloadObj(obj) {
+  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  const safeName = (v.event || "event").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
-  a.download = `safecheck-${safeName}-${(v.date||"")}.json`;
+  const safeName = (obj.event || "event").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+  a.download = `safecheck-${safeName}-${(obj.date||"")}.json`;
   a.click();
   URL.revokeObjectURL(a.href);
 }
 
-function exportCurrent() { downloadVersion(snapshot()); }
-
-function applyEvent() {
+// ===========================================================================
+//  ADMIN ACTIONS
+// ===========================================================================
+async function applyEvent() {
   const name = document.getElementById("aEvent").value.trim();
   const date = document.getElementById("aDate").value;
-  state.event = name;
-  state.date = date;
-  save();
-  renderHeader();
+  if (!ACTIVE) { return newEventFromFields(); }
+  await Store.updateMeta(name, date);
+  renderHeader(); renderVersions();
   toast("Event updated");
 }
 
-function resetTool() {
-  if (!confirm("Reset all responses and start a new event?\n\nTip: save the current version first if you need to keep it.")) return;
-  const name = prompt("New event name:", "");
-  if (name === null) return;
-  const date = prompt("New event date (YYYY-MM-DD):", state.date || "");
-  if (date === null) return;
-  state = { event: name.trim(), date: date.trim(), responses: {} };
-  save();
-  document.getElementById("aEvent").value = state.event;
-  document.getElementById("aDate").value = state.date;
-  renderHeader(); renderSummary(); renderRoster();
-  toast("Tool reset for new event");
+async function newEventFromFields() {
+  const name = document.getElementById("aEvent").value.trim();
+  const date = document.getElementById("aDate").value;
+  if (!name) { toast("Enter an event name first."); return; }
+  await Store.newEvent(name, date);
+  renderHeader(); renderSummary(); renderRoster(); renderVersions();
+  toast("New event started");
 }
 
-// ---- Misc ----
+async function resetTool() {
+  const msg = MODE === "cloud"
+    ? "Archive the current event and start a new one?\n\nCurrent responses stay saved under “Saved versions.”"
+    : "Save the current responses as a version and start a new event?";
+  if (!confirm(msg)) return;
+  const name = prompt("New event name:", "");
+  if (name === null) return;
+  const date = prompt("New event date (YYYY-MM-DD):", ACTIVE ? ACTIVE.date : "");
+  if (date === null) return;
+  await Store.newEvent(name.trim(), date.trim());
+  document.getElementById("aEvent").value = ACTIVE.name;
+  document.getElementById("aDate").value = ACTIVE.date;
+  renderHeader(); renderSummary(); renderRoster(); renderVersions();
+  toast("New event started");
+}
+
+async function saveVersion() {
+  const did = await Store.saveVersionNow();
+  renderVersions();
+  if (did) toast("Version saved");
+  else { downloadObj(await Store.fetchSnapshot(null)); toast("Responses are auto-saved — exported a copy"); }
+}
+
+// ===========================================================================
+//  MISC / WIRING
+// ===========================================================================
 let toastTimer;
 function toast(msg) {
   const t = document.getElementById("toast");
   t.textContent = msg; t.classList.add("show");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2600);
 }
 
-// ---- Wire up ----
-document.getElementById("adminToggle").addEventListener("click", () => {
-  const panel = document.getElementById("adminPanel");
-  panel.classList.toggle("open");
-  if (panel.classList.contains("open")) {
-    document.getElementById("aEvent").value = state.event || "";
-    document.getElementById("aDate").value = state.date || "";
-    panel.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-});
-document.getElementById("applyEvent").addEventListener("click", applyEvent);
-document.getElementById("saveVersion").addEventListener("click", saveVersion);
-document.getElementById("exportBtn").addEventListener("click", exportCurrent);
-document.getElementById("resetBtn").addEventListener("click", resetTool);
+function showBanner(html, isErr) {
+  const b = document.getElementById("banner");
+  b.innerHTML = `<div class="banner ${isErr?"err":""}">${html}</div>`;
+}
 
-document.getElementById("search").addEventListener("input", e => { query = e.target.value.trim().toLowerCase(); renderRoster(); });
-document.querySelectorAll(".chip").forEach(ch => {
-  ch.addEventListener("click", () => {
-    document.querySelectorAll(".chip").forEach(x => x.classList.remove("active"));
-    ch.classList.add("active");
-    filter = ch.dataset.filter;
-    renderRoster();
+function wire() {
+  document.getElementById("adminToggle").addEventListener("click", () => {
+    const panel = document.getElementById("adminPanel");
+    panel.classList.toggle("open");
+    if (panel.classList.contains("open")) {
+      document.getElementById("aEvent").value = ACTIVE ? ACTIVE.name : "";
+      document.getElementById("aDate").value = ACTIVE ? ACTIVE.date : "";
+      renderVersions();
+      panel.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   });
-});
+  document.getElementById("applyEvent").addEventListener("click", applyEvent);
+  document.getElementById("saveVersion").addEventListener("click", saveVersion);
+  document.getElementById("exportBtn").addEventListener("click", async () => downloadObj(await Store.fetchSnapshot(null)));
+  document.getElementById("resetBtn").addEventListener("click", resetTool);
 
-renderHeader();
-renderSummary();
-renderRoster();
-renderVersions();
+  document.getElementById("search").addEventListener("input", e => { query = e.target.value.trim().toLowerCase(); renderRoster(); });
+  document.querySelectorAll(".chip").forEach(ch => {
+    ch.addEventListener("click", () => {
+      document.querySelectorAll(".chip").forEach(x => x.classList.remove("active"));
+      ch.classList.add("active"); filter = ch.dataset.filter; renderRoster();
+    });
+  });
+
+  const rep = document.getElementById("reporter");
+  rep.value = localStorage.getItem(REPORTER_KEY) || "";
+  rep.addEventListener("input", () => localStorage.setItem(REPORTER_KEY, rep.value));
+
+  // In cloud mode, hide the "Save this version" button (data auto-saves).
+  if (MODE === "cloud") document.getElementById("saveVersion").style.display = "none";
+}
+
+// ---- Passcode gate (cloud only) ----
+function showGate() {
+  return new Promise(resolve => {
+    const gate = document.getElementById("gate");
+    const input = document.getElementById("gateInput");
+    const btn = document.getElementById("gateBtn");
+    const err = document.getElementById("gateErr");
+    gate.classList.add("show");
+    input.focus();
+    async function attempt() {
+      err.textContent = ""; btn.disabled = true; btn.textContent = "Checking…";
+      const { error } = await sb.auth.signInWithPassword({ email: CFG.SHARED_EMAIL, password: input.value });
+      btn.disabled = false; btn.textContent = "Enter";
+      if (error) { err.textContent = "Incorrect passcode."; input.select(); return; }
+      gate.classList.remove("show"); resolve(true);
+    }
+    btn.addEventListener("click", attempt);
+    input.addEventListener("keydown", e => { if (e.key === "Enter") attempt(); });
+  });
+}
+
+// ===========================================================================
+//  BOOT
+// ===========================================================================
+(async function boot() {
+  renderHeader();
+  if (MODE === "cloud") {
+    if (!window.supabase) {
+      MODE = "local";
+      showBanner("Couldn't load the cloud library (offline?). Running in <b>local-only</b> mode.", true);
+    } else {
+      sb = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY);
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) await showGate();
+    }
+  }
+
+  try {
+    await Store.init();
+  } catch (e) {
+    showBanner("Backend error: " + (e.message || e) + ". Check config.js and that the schema was created.", true);
+  }
+
+  wire();
+  renderHeader(); renderSummary(); renderRoster();
+
+  if (MODE === "local") {
+    showBanner("<b>Local mode.</b> Responses are saved only in this browser. Add your Supabase keys in <code>config.js</code> to share across devices (see SETUP.md).");
+  }
+})();
 </script>
