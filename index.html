@@ -912,7 +912,13 @@ function showGate() {
       err.textContent = ""; btn.disabled = true; btn.textContent = "Checking…";
       const { error } = await sb.auth.signInWithPassword({ email: CFG.SHARED_EMAIL, password: input.value });
       btn.disabled = false; btn.textContent = "Enter";
-      if (error) { err.textContent = "Incorrect passcode."; input.select(); return; }
+      if (error) {
+        const m = (error.message || "").toLowerCase();
+        if (m.includes("not confirmed")) err.textContent = "Sign-in account is not confirmed in Supabase (enable Auto Confirm).";
+        else if (m.includes("invalid login")) err.textContent = "Incorrect passcode (or the sign-in account doesn't exist).";
+        else err.textContent = error.message || "Sign-in failed.";
+        input.select(); return;
+      }
       gate.classList.remove("show"); resolve(true);
     }
     btn.addEventListener("click", attempt);
