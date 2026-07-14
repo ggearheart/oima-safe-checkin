@@ -12,8 +12,8 @@
 // ---------------------------------------------------------------------------
 window.SAFECHECK_CONFIG = {
   // From Supabase → Project Settings → API
-  SUPABASE_URL: "",        // e.g. "https://abcd1234.supabase.co"
-  SUPABASE_ANON_KEY: "",   // the public "anon" key (safe to publish)
+  SUPABASE_URL: "https://wotzqromohcjpstvwvrt.supabase.co",        // e.g. "https://abcd1234.supabase.co"
+  SUPABASE_ANON_KEY: "sb_publishable_UetwbySnh2t7GcS7vsQPIg_AJCA0ZrJ",   // the public "anon" key (safe to publish)
 
   // The shared sign-in you create in Supabase → Authentication → Users.
   // The office PASSCODE is that user's PASSWORD (set/change it in Supabase).
