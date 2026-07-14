@@ -1,0 +1,535 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Are You Safe? — OIMA Check-In</title>
+<style>
+  :root {
+    --bg: #f4f6f8;
+    --card: #ffffff;
+    --ink: #1a2733;
+    --muted: #5c6b7a;
+    --line: #e2e8f0;
+    --brand: #1f5c8b;
+    --brand-dark: #164b73;
+    --safe: #1f9d55;
+    --safe-bg: #e6f6ec;
+    --help: #d64545;
+    --help-bg: #fbeaea;
+    --pending: #b0791f;
+    --pending-bg: #fdf3e2;
+    --shadow: 0 1px 3px rgba(16,32,48,.08), 0 6px 20px rgba(16,32,48,.05);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  header.app {
+    background: linear-gradient(135deg, #1f5c8b, #164b73);
+    color: #fff;
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+  .head-row { display: flex; align-items: center; gap: 14px; max-width: 1080px; margin: 0 auto; flex-wrap: wrap; }
+  .head-mark {
+    width: 42px; height: 42px; border-radius: 10px; background: rgba(255,255,255,.15);
+    display: grid; place-items: center; font-size: 22px; flex: none;
+  }
+  .head-title { flex: 1 1 240px; min-width: 0; }
+  .head-title h1 { margin: 0; font-size: 19px; font-weight: 700; letter-spacing: .2px; }
+  .head-title .event { margin: 2px 0 0; font-size: 13px; opacity: .9; }
+  .head-title .event b { font-weight: 600; }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 18px 20px 60px; }
+
+  /* Summary bar */
+  .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 4px 0 18px; }
+  .stat {
+    background: var(--card); border-radius: 12px; padding: 14px 16px; box-shadow: var(--shadow);
+    border: 1px solid var(--line); text-align: center;
+  }
+  .stat .num { font-size: 26px; font-weight: 800; line-height: 1; }
+  .stat .lbl { font-size: 12px; color: var(--muted); margin-top: 5px; text-transform: uppercase; letter-spacing: .5px; }
+  .stat.total .num { color: var(--brand); }
+  .stat.safe .num { color: var(--safe); }
+  .stat.help .num { color: var(--help); }
+  .stat.pending .num { color: var(--pending); }
+
+  .progress { height: 8px; border-radius: 6px; background: var(--line); overflow: hidden; display: flex; margin-bottom: 18px; }
+  .progress > span { display: block; height: 100%; }
+  .progress .p-safe { background: var(--safe); }
+  .progress .p-help { background: var(--help); }
+
+  /* Controls */
+  .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+  .search { flex: 1 1 220px; position: relative; }
+  .search input {
+    width: 100%; padding: 10px 12px 10px 34px; border: 1px solid var(--line); border-radius: 10px;
+    font-size: 15px; background: var(--card);
+  }
+  .search::before { content: "🔍"; position: absolute; left: 11px; top: 50%; transform: translateY(-50%); font-size: 13px; opacity: .6; }
+  .filters { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    border: 1px solid var(--line); background: var(--card); color: var(--muted);
+    padding: 8px 13px; border-radius: 20px; font-size: 13px; cursor: pointer; font-weight: 600;
+  }
+  .chip.active { background: var(--brand); color: #fff; border-color: var(--brand); }
+
+  /* Roster */
+  .group-head {
+    font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px;
+    color: var(--muted); margin: 20px 4px 8px; display: flex; align-items: center; gap: 8px;
+  }
+  .group-head .g-count { font-weight: 600; opacity: .8; }
+  .person {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px;
+    box-shadow: var(--shadow); margin-bottom: 10px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    border-left: 5px solid var(--line);
+  }
+  .person.s-safe { border-left-color: var(--safe); }
+  .person.s-help { border-left-color: var(--help); }
+  .person.s-pending { border-left-color: var(--pending); }
+  .p-main { flex: 1 1 220px; min-width: 0; }
+  .p-name { font-weight: 700; font-size: 15.5px; }
+  .p-meta { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .p-note { font-size: 12.5px; color: var(--muted); margin-top: 6px; font-style: italic; display: none; }
+  .p-note.show { display: block; }
+  .p-time { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  .btns { display: flex; gap: 6px; flex: none; }
+  .sbtn {
+    border: 1.5px solid var(--line); background: var(--card); color: var(--muted);
+    padding: 8px 12px; border-radius: 9px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap;
+  }
+  .sbtn.safe.on { background: var(--safe-bg); color: var(--safe); border-color: var(--safe); }
+  .sbtn.help.on { background: var(--help-bg); color: var(--help); border-color: var(--help); }
+  .note-btn { background: none; border: none; color: var(--brand); font-size: 12px; cursor: pointer; padding: 8px 4px; font-weight: 600; }
+
+  /* Admin */
+  .admin-toggle {
+    position: fixed; bottom: 18px; right: 18px; z-index: 30;
+    background: var(--ink); color: #fff; border: none; border-radius: 24px; padding: 11px 18px;
+    font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.25);
+  }
+  .admin-panel {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow);
+    padding: 18px; margin-bottom: 20px; display: none;
+  }
+  .admin-panel.open { display: block; }
+  .admin-panel h2 { margin: 0 0 4px; font-size: 16px; }
+  .admin-panel .hint { font-size: 12.5px; color: var(--muted); margin: 0 0 16px; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 5px; }
+  .field input { width: 100%; padding: 9px 11px; border: 1px solid var(--line); border-radius: 9px; font-size: 15px; }
+  .admin-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .admin-row .field { flex: 1 1 200px; }
+  .abtns { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+  .btn {
+    border: none; border-radius: 10px; padding: 11px 16px; font-size: 14px; font-weight: 700; cursor: pointer;
+  }
+  .btn.primary { background: var(--brand); color: #fff; }
+  .btn.ghost { background: #eef2f6; color: var(--ink); }
+  .btn.danger { background: var(--help-bg); color: var(--help); }
+  .btn.save { background: var(--safe); color: #fff; }
+
+  .versions { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 14px; }
+  .versions h3 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); }
+  .ver { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 13px; flex-wrap: wrap; }
+  .ver .v-name { font-weight: 700; flex: 1 1 160px; }
+  .ver .v-stat { color: var(--muted); font-size: 12px; }
+  .ver a, .ver button { font-size: 12px; }
+  .link-btn { background: none; border: none; color: var(--brand); font-weight: 600; cursor: pointer; padding: 4px 6px; }
+  .link-btn.del { color: var(--help); }
+  .empty-note { color: var(--muted); font-size: 13px; font-style: italic; }
+
+  .toast {
+    position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--ink); color: #fff; padding: 11px 18px; border-radius: 10px; font-size: 14px;
+    opacity: 0; transition: all .25s; pointer-events: none; z-index: 50; box-shadow: 0 4px 14px rgba(0,0,0,.3);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 560px) {
+    .summary { grid-template-columns: repeat(2, 1fr); }
+    .person { gap: 10px; }
+    .btns { flex: 1 1 100%; }
+    .sbtn { flex: 1; text-align: center; }
+  }
+</style>
+
+<header class="app">
+  <div class="head-row">
+    <div class="head-mark">🛟</div>
+    <div class="head-title">
+      <h1>Are You Safe? — Employee Check-In</h1>
+      <p class="event">Event: <b id="hEvent">—</b> &nbsp;·&nbsp; <span id="hDate">—</span></p>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="admin-panel" id="adminPanel">
+    <h2>Admin controls</h2>
+    <p class="hint">Set the current event, save a snapshot of responses, or reset for a new event. Data is stored in this browser.</p>
+    <div class="admin-row">
+      <div class="field">
+        <label>Event name</label>
+        <input id="aEvent" type="text" placeholder="e.g. Gas leak at CalEPA HQ">
+      </div>
+      <div class="field">
+        <label>Event date</label>
+        <input id="aDate" type="date">
+      </div>
+    </div>
+    <div class="abtns">
+      <button class="btn primary" id="applyEvent">Update event</button>
+      <button class="btn save" id="saveVersion">💾 Save this version</button>
+      <button class="btn ghost" id="exportBtn">⬇ Export JSON</button>
+      <button class="btn danger" id="resetBtn">↺ Reset &amp; new event</button>
+    </div>
+
+    <div class="versions">
+      <h3>Saved versions</h3>
+      <div id="versionList"></div>
+    </div>
+  </div>
+
+  <div class="summary">
+    <div class="stat total"><div class="num" id="cTotal">0</div><div class="lbl">Roster</div></div>
+    <div class="stat safe"><div class="num" id="cSafe">0</div><div class="lbl">Safe</div></div>
+    <div class="stat help"><div class="num" id="cHelp">0</div><div class="lbl">Needs help</div></div>
+    <div class="stat pending"><div class="num" id="cPending">0</div><div class="lbl">No response</div></div>
+  </div>
+  <div class="progress" id="progress">
+    <span class="p-safe" style="width:0"></span>
+    <span class="p-help" style="width:0"></span>
+  </div>
+
+  <div class="controls">
+    <div class="search"><input id="search" type="text" placeholder="Search name, unit, or title…"></div>
+    <div class="filters">
+      <button class="chip active" data-filter="all">All</button>
+      <button class="chip" data-filter="pending">No response</button>
+      <button class="chip" data-filter="safe">Safe</button>
+      <button class="chip" data-filter="help">Needs help</button>
+    </div>
+  </div>
+
+  <div id="roster"></div>
+</div>
+
+<button class="admin-toggle" id="adminToggle">⚙ Admin</button>
+<div class="toast" id="toast"></div>
+
+<script>
+// ---- Roster (from OIMA employee master, vacant positions excluded) ----
+const ROSTER = [
+  ["Greg Gearheart","Executive","CEA A, Director"],
+  ["Andrew Hamilton","Management","Environmental Program Manager I (Sup)"],
+  ["Kiranpreet (Kiran) Kaur","Data Integration and Analysis","Senior WRC Engineer (Sup.)"],
+  ["Allysen Calalang","Data Integration and Analysis","WRC Engineer"],
+  ["Julius Choi","Data Integration and Analysis","WRC Engineer"],
+  ["David Altare","Data Integration and Analysis","WRC Engineer"],
+  ["Swarnalakshmi (Swarna) Gopalarathnam","Data Integration and Analysis","Research Data Specialist III"],
+  ["Ranita Prasad","Quality Assurance","Senior Environmental Scientist (Spec)"],
+  ["Annarose Holder","Data and Equity","Sr. Environmental Scientist (Spec)"],
+  ["Marisa Van Dyke","Harmful Algal Bloom Program","Senior Environmental Scientist (Spec)"],
+  ["Carly Nilson","Harmful Algal Bloom Program","Senior Environmental Scientist (Spec)"],
+  ["Chad Fearing","Contracts/Budgets","Analyst II"],
+  ["Sarah Guest","Contracts/Budgets","Analyst II"],
+  ["Tessa Fojut","QA/Data Management","Senior Environmental Scientist (Sup)"],
+  ["Jennifer Salisbury","QA/Data Management","Environmental Scientist"],
+  ["Toni Marshall","QA/Data Management","Environmental Scientist"],
+  ["James “Tony” Gill","QA/Data Management","Environmental Scientist"],
+  ["Keenan Smith","QA/Data Management","Environmental Scientist"],
+  ["Candice Heinz","QA/Data Management","Environmental Scientist"],
+  ["Alyssa Crabbe","QA/Data Management","Scientific Aid"],
+  ["Kimberly Pham","QA/Data Management","Environmental Scientist"],
+  ["Alexandria Dunn","SWAMP Unit","Senior Environmental Scientist (Sup)"],
+  ["Elena Suglia","SWAMP Unit","Environmental Scientist"],
+  ["Felisha Walls","SWAMP Unit","Environmental Scientist"],
+  ["Michelle Tang","SWAMP Unit","Research Data Specialist III"],
+  ["Lindsey Metz","SWAMP Unit","Environmental Scientist"],
+  ["Devan Burke","SWAMP Unit","Environmental Scientist"],
+  ["Laura Webber","Monitoring Council","Environmental Program Manager I (Spec)"],
+  ["Erickson Burres","Clean Water Team","Sr. Environmental Scientist (Spec)"],
+  ["Patricia Orosz","Administrative Support","Office Technician (T)"]
+].map((r,i) => ({ id: i, name: r[0], unit: r[1], title: r[2] }));
+
+const STATE_KEY = "oima_safecheck_state_v1";
+const VER_KEY   = "oima_safecheck_versions_v1";
+
+const DEFAULT_STATE = {
+  event: "Gas leak at CalEPA HQ",
+  date: "2026-07-14",
+  responses: {}   // id -> { status: 'safe'|'help'|'pending', note: '', ts: '' }
+};
+
+let state = load();
+let filter = "all";
+let query = "";
+
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STATE_KEY));
+    if (s && s.event !== undefined) return s;
+  } catch(e) {}
+  return structuredClone(DEFAULT_STATE);
+}
+function save() { localStorage.setItem(STATE_KEY, JSON.stringify(state)); }
+function getVersions() {
+  try { return JSON.parse(localStorage.getItem(VER_KEY)) || []; } catch(e) { return []; }
+}
+function setVersions(v) { localStorage.setItem(VER_KEY, JSON.stringify(v)); }
+
+function resp(id) {
+  return state.responses[id] || { status: "pending", note: "", ts: "" };
+}
+function nowStamp() {
+  const d = new Date();
+  return d.toLocaleString(undefined, { month:"short", day:"numeric", hour:"numeric", minute:"2-digit" });
+}
+function fmtDate(iso) {
+  if (!iso) return "—";
+  const [y,m,d] = iso.split("-").map(Number);
+  return new Date(y, m-1, d).toLocaleDateString(undefined, { weekday:"short", year:"numeric", month:"long", day:"numeric" });
+}
+
+// ---- Rendering ----
+function counts() {
+  let safe=0, help=0, pending=0;
+  ROSTER.forEach(p => {
+    const s = resp(p.id).status;
+    if (s==="safe") safe++; else if (s==="help") help++; else pending++;
+  });
+  return { safe, help, pending, total: ROSTER.length };
+}
+
+function renderHeader() {
+  document.getElementById("hEvent").textContent = state.event || "(unnamed event)";
+  document.getElementById("hDate").textContent = fmtDate(state.date);
+}
+
+function renderSummary() {
+  const c = counts();
+  document.getElementById("cTotal").textContent = c.total;
+  document.getElementById("cSafe").textContent = c.safe;
+  document.getElementById("cHelp").textContent = c.help;
+  document.getElementById("cPending").textContent = c.pending;
+  const prog = document.getElementById("progress");
+  prog.querySelector(".p-safe").style.width = (c.safe/c.total*100) + "%";
+  prog.querySelector(".p-help").style.width = (c.help/c.total*100) + "%";
+}
+
+function matches(p) {
+  const s = resp(p.id).status;
+  if (filter !== "all" && s !== filter) return false;
+  if (query) {
+    const hay = (p.name + " " + p.unit + " " + p.title).toLowerCase();
+    if (!hay.includes(query)) return false;
+  }
+  return true;
+}
+
+function renderRoster() {
+  const root = document.getElementById("roster");
+  root.innerHTML = "";
+  const visible = ROSTER.filter(matches);
+
+  if (!visible.length) {
+    root.innerHTML = '<p class="empty-note">No one matches the current search or filter.</p>';
+    return;
+  }
+
+  // group by unit, preserving roster order
+  const groups = [];
+  const idx = {};
+  visible.forEach(p => {
+    if (!(p.unit in idx)) { idx[p.unit] = groups.length; groups.push({ unit: p.unit, people: [] }); }
+    groups[idx[p.unit]].people.push(p);
+  });
+
+  groups.forEach(g => {
+    const gh = document.createElement("div");
+    gh.className = "group-head";
+    gh.innerHTML = `${g.unit} <span class="g-count">· ${g.people.length}</span>`;
+    root.appendChild(gh);
+
+    g.people.forEach(p => {
+      const r = resp(p.id);
+      const el = document.createElement("div");
+      el.className = "person s-" + r.status;
+      el.innerHTML = `
+        <div class="p-main">
+          <div class="p-name"></div>
+          <div class="p-meta"></div>
+          <div class="p-note ${r.note ? "show":""}"></div>
+          <div class="p-time">${r.ts ? "Updated "+r.ts : ""}</div>
+        </div>
+        <div class="btns">
+          <button class="sbtn safe ${r.status==="safe"?"on":""}" data-act="safe">✓ Safe</button>
+          <button class="sbtn help ${r.status==="help"?"on":""}" data-act="help">⚠ Needs help</button>
+        </div>
+        <button class="note-btn" data-act="note">＋ Note</button>`;
+      el.querySelector(".p-name").textContent = p.name;
+      el.querySelector(".p-meta").textContent = p.title;
+      if (r.note) el.querySelector(".p-note").textContent = "“" + r.note + "”";
+
+      el.querySelectorAll("[data-act]").forEach(b => {
+        b.addEventListener("click", () => {
+          const act = b.dataset.act;
+          if (act === "note") { addNote(p.id); return; }
+          const cur = resp(p.id).status;
+          setStatus(p.id, cur === act ? "pending" : act);
+        });
+      });
+      root.appendChild(el);
+    });
+  });
+}
+
+function setStatus(id, status) {
+  const r = resp(id);
+  state.responses[id] = { status, note: r.note || "", ts: status==="pending" ? "" : nowStamp() };
+  save();
+  renderSummary(); renderRoster();
+}
+
+function addNote(id) {
+  const r = resp(id);
+  const p = ROSTER[id];
+  const note = prompt("Note for " + p.name + " (location, condition, etc.):", r.note || "");
+  if (note === null) return;
+  state.responses[id] = { status: r.status || "pending", note: note.trim(), ts: r.ts || nowStamp() };
+  save();
+  renderRoster();
+}
+
+// ---- Admin ----
+function renderVersions() {
+  const list = document.getElementById("versionList");
+  const versions = getVersions();
+  if (!versions.length) { list.innerHTML = '<p class="empty-note">No saved versions yet.</p>'; return; }
+  list.innerHTML = "";
+  versions.slice().reverse().forEach(v => {
+    const c = v.counts;
+    const row = document.createElement("div");
+    row.className = "ver";
+    row.innerHTML = `
+      <span class="v-name"></span>
+      <span class="v-stat">${c.safe} safe · ${c.help} help · ${c.pending} no response</span>
+      <button class="link-btn" data-act="dl">Download</button>
+      <button class="link-btn del" data-act="del">Delete</button>`;
+    row.querySelector(".v-name").textContent = `${v.event} — ${fmtDate(v.date)}`;
+    row.querySelector('[data-act="dl"]').addEventListener("click", () => downloadVersion(v));
+    row.querySelector('[data-act="del"]').addEventListener("click", () => {
+      if (!confirm("Delete this saved version?")) return;
+      setVersions(getVersions().filter(x => x.savedAt !== v.savedAt));
+      renderVersions();
+    });
+    list.appendChild(row);
+  });
+}
+
+function snapshot() {
+  return {
+    event: state.event,
+    date: state.date,
+    savedAt: new Date().toISOString(),
+    counts: counts(),
+    roster: ROSTER.map(p => {
+      const r = resp(p.id);
+      return { name: p.name, unit: p.unit, title: p.title, status: r.status, note: r.note, updated: r.ts };
+    })
+  };
+}
+
+function saveVersion() {
+  const snap = snapshot();
+  const versions = getVersions();
+  versions.push(snap);
+  setVersions(versions);
+  renderVersions();
+  toast("Version saved for “" + snap.event + "”");
+}
+
+function downloadVersion(v) {
+  const blob = new Blob([JSON.stringify(v, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  const safeName = (v.event || "event").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+  a.download = `safecheck-${safeName}-${(v.date||"")}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function exportCurrent() { downloadVersion(snapshot()); }
+
+function applyEvent() {
+  const name = document.getElementById("aEvent").value.trim();
+  const date = document.getElementById("aDate").value;
+  state.event = name;
+  state.date = date;
+  save();
+  renderHeader();
+  toast("Event updated");
+}
+
+function resetTool() {
+  if (!confirm("Reset all responses and start a new event?\n\nTip: save the current version first if you need to keep it.")) return;
+  const name = prompt("New event name:", "");
+  if (name === null) return;
+  const date = prompt("New event date (YYYY-MM-DD):", state.date || "");
+  if (date === null) return;
+  state = { event: name.trim(), date: date.trim(), responses: {} };
+  save();
+  document.getElementById("aEvent").value = state.event;
+  document.getElementById("aDate").value = state.date;
+  renderHeader(); renderSummary(); renderRoster();
+  toast("Tool reset for new event");
+}
+
+// ---- Misc ----
+let toastTimer;
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
+}
+
+// ---- Wire up ----
+document.getElementById("adminToggle").addEventListener("click", () => {
+  const panel = document.getElementById("adminPanel");
+  panel.classList.toggle("open");
+  if (panel.classList.contains("open")) {
+    document.getElementById("aEvent").value = state.event || "";
+    document.getElementById("aDate").value = state.date || "";
+    panel.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+});
+document.getElementById("applyEvent").addEventListener("click", applyEvent);
+document.getElementById("saveVersion").addEventListener("click", saveVersion);
+document.getElementById("exportBtn").addEventListener("click", exportCurrent);
+document.getElementById("resetBtn").addEventListener("click", resetTool);
+
+document.getElementById("search").addEventListener("input", e => { query = e.target.value.trim().toLowerCase(); renderRoster(); });
+document.querySelectorAll(".chip").forEach(ch => {
+  ch.addEventListener("click", () => {
+    document.querySelectorAll(".chip").forEach(x => x.classList.remove("active"));
+    ch.classList.add("active");
+    filter = ch.dataset.filter;
+    renderRoster();
+  });
+});
+
+renderHeader();
+renderSummary();
+renderRoster();
+renderVersions();
+</script>
