@@ -280,6 +280,7 @@
     <div class="abtns">
       <button class="btn primary" id="applyEvent">Update event</button>
       <button class="btn save" id="saveVersion">💾 Save this version</button>
+      <button class="btn ghost" id="exportCsvBtn">⬇ Export CSV</button>
       <button class="btn ghost" id="exportBtn">⬇ Export JSON</button>
       <button class="btn ghost" id="editRoster">✎ Edit roster</button>
       <button class="btn danger" id="resetBtn">↺ Archive &amp; new event</button>
@@ -766,12 +767,14 @@ async function renderVersions() {
     row.innerHTML = `
       <span class="v-name"></span>
       <span class="v-stat">${v.safe} safe · ${v.help} help · ${v.pending} no response</span>
-      <button class="link-btn" data-act="dl">Download</button>
+      <button class="link-btn" data-act="csv">CSV</button>
+      <button class="link-btn" data-act="json">JSON</button>
       <button class="link-btn del" data-act="del">Delete</button>`;
     const nameEl = row.querySelector(".v-name");
     nameEl.textContent = `${v.name} — ${fmtDate(v.date)}`;
     if (v.active) { const t = document.createElement("span"); t.className = "tag"; t.textContent = "active"; nameEl.appendChild(t); }
-    row.querySelector('[data-act="dl"]').addEventListener("click", async () => downloadObj(await Store.fetchSnapshot(v)));
+    row.querySelector('[data-act="csv"]').addEventListener("click", async () => downloadCsv(await Store.fetchSnapshot(v)));
+    row.querySelector('[data-act="json"]').addEventListener("click", async () => downloadObj(await Store.fetchSnapshot(v)));
     row.querySelector('[data-act="del"]').addEventListener("click", async () => {
       if (!confirm("Delete this saved version?")) return;
       await Store.deleteVersion(v); renderVersions();
@@ -780,14 +783,42 @@ async function renderVersions() {
   });
 }
 
-function downloadObj(obj) {
-  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+function fileBase(obj) {
+  const safeName = (obj.event || "event").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+  return `safecheck-${ORG.code}-${safeName}-${(obj.date||"")}`;
+}
+function triggerDownload(filename, text, mime) {
+  const blob = new Blob([text], { type: mime });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  const safeName = (obj.event || "event").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
-  a.download = `safecheck-${ORG.code}-${safeName}-${(obj.date||"")}.json`;
+  a.download = filename;
   a.click();
   URL.revokeObjectURL(a.href);
+}
+function downloadObj(obj) { triggerDownload(fileBase(obj) + ".json", JSON.stringify(obj, null, 2), "application/json"); }
+function downloadCsv(obj) { triggerDownload(fileBase(obj) + ".csv", snapshotToCsv(obj), "text/csv;charset=utf-8"); }
+
+function statusLabel(s) { return s === "safe" ? "Safe" : s === "help" ? "Needs help" : "No response"; }
+function csvCell(v) {
+  v = (v == null ? "" : String(v));
+  return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+}
+function snapshotToCsv(obj) {
+  const org = obj.organization || {}, c = obj.counts || {};
+  const rows = [
+    ["Organization", org.name || ""],
+    ["Org code", org.code || ""],
+    ["Department", org.department || ""],
+    ["Event", obj.event || ""],
+    ["Date", obj.date || ""],
+    ["Exported", obj.savedAt || ""],
+    ["Safe", c.safe], ["Needs help", c.help], ["No response", c.pending], ["Roster total", c.total],
+    [],
+    ["Name", "Unit/Program", "Title", "Status", "Note", "Updated", "Reported by"]
+  ];
+  (obj.roster || []).forEach(p => rows.push([p.name, p.unit, p.title, statusLabel(p.status), p.note, p.updated, p.by]));
+  // Prepend a UTF-8 BOM so Excel reads accented names/curly quotes correctly.
+  return "﻿" + rows.map(r => r.map(csvCell).join(",")).join("\r\n");
 }
 
 // ===========================================================================
@@ -871,6 +902,7 @@ function wire() {
   document.getElementById("applyEvent").addEventListener("click", applyEvent);
   document.getElementById("saveVersion").addEventListener("click", saveVersion);
   document.getElementById("exportBtn").addEventListener("click", async () => downloadObj(await Store.fetchSnapshot(null)));
+  document.getElementById("exportCsvBtn").addEventListener("click", async () => downloadCsv(await Store.fetchSnapshot(null)));
   document.getElementById("resetBtn").addEventListener("click", resetTool);
   document.getElementById("editRoster").addEventListener("click", openEditor);
 
